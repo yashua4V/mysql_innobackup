@@ -1,6 +1,6 @@
 #!/bin/bash
 #获取本地数据库信息
-source /usr/local/etc/zabbix_agentd.conf.d/zabbix_diy/script/conf_script/get_db_back_info.sh
+source /usr/local/etc/zabbix_agentd.conf.d/zabbix_diy/script/conf_script/get_db_backXtra_info.sh
 #备份保存路径 
 backup_dir=`get_db_back_info backup_dir`
 #增量备份保存路径 
@@ -37,11 +37,11 @@ fi
 #执行备份
 #检查客户端是否安装ftp，没有安装就安装
 rpm -q ftp   ||  yum install -y  ftp
-[ -d $backup_dir ] || mkdir $backup_dir
+[ -d $backup_dir ] || mkdir -p  $backup_dir
 
 #mysqldump -h$IP -P$Port -u$User -p$Pass --quick --routines --single-transaction --databases $DbName | gzip > $backup_dir/${PName}_bak_$Now.sql.gz
 rm -rf  $backup_incrdir/* && rm -rf $backup_dir/mysql #每天第一次做完全备份时清空增量备份文件夹里的文件
-innobackupex --user=$User --password=$Pass  $backup_dir/mysql --no-timestamp
+innobackupex --user=$User --password=$Pass --databases=$DbName $backup_dir/mysql  --no-timestamp
 
 tar -czf backup_dir/mysql $backup_dir/${PName}_fullbak_$Now.sql.gz
 if [ $? -eq 0  ]

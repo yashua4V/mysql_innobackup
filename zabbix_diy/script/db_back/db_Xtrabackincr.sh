@@ -1,6 +1,6 @@
 #!/bin/bash
 #获取本地数据库信息
-source /usr/local/etc/zabbix_agentd.conf.d/zabbix_diy/script/conf_script/get_db_back_info.sh
+source /usr/local/etc/zabbix_agentd.conf.d/zabbix_diy/script/conf_script/get_db_backXtra_info.sh
 #完全备份保存路径
 backup_dir=`get_db_back_info backup_dir`
 #增量备份保存路径 
@@ -37,12 +37,13 @@ fi
 #执行备份
 #检查客户端是否安装ftp，没有安装就安装
 rpm -q ftp   ||  yum install -y  ftp
-[ -d $backup_dir ] || mkdir $backup_dir
+[ -d $backup_dir ] || mkdir -p  $backup_dir
+[ -d $backupincr_dir ] || mkdir -p  $backupincr_dir
 #mysqldump -h$IP -P$Port -u$User -p$Pass --quick --routines --single-transaction --databases $DbName | gzip > $backup_dir/${PName}_bak_$Now.sql.gzz
 #在最近一次的增量备份或完全备份基础上做增量备份
 ls $backup_incrdir/* &> /dev/null
 if [ $? != 0 ];then
- innobackupex  --user=$User --password=$Pass  --incremental $backup_incrdir/1  --incremental-basedir=$backup_dir/mysql --no-timestamp
+ innobackupex  --user=$User --password=$Pass --databases=$DbName  --incremental $backup_incrdir/1  --incremental-basedir=$backup_dir/mysql --no-timestamp
  filename=$backup_incrdir/1
 else
   temp=0;
@@ -53,7 +54,7 @@ else
          fi
       done
   tempadd=$[temp + 1]
-  innobackupex  --user=$User --password=$Pass   --incremental $backup_incrdir/$tempadd  --incremental-basedir=$backup_dir/$temp --no-timestamp
+  innobackupex  --user=$User --password=$Pass --databases=$DbName   --incremental $backup_incrdir/$tempadd  --incremental-basedir=$backup_dir/$temp --no-timestamp
   filename=$backup_incrdir/$tempadd
 fi
 tar -czf  $backup_dir/${PName}_incrbak_$Now.sql.gz  $filename
